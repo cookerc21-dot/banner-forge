@@ -68,6 +68,8 @@ jobs:
       - name: Forge banner(s)
         env:
           AGNES_API_KEY: ${{ secrets.AGNES_API_KEY }}
+          CA: ${{ github.event_name == 'issues' && steps.parse.outputs.ca || github.event.inputs.ca }}
+          CHAIN: ${{ env.CHAIN || '' }}
           ISSUE_NUM: ${{ github.event.issue.number || 0 }}
           FORGE_MODE: ${{ github.event_name }}
         run: |
