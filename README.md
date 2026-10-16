@@ -23,6 +23,15 @@ Want a different vibe? **Edit your issue body** (theme words) and the forge re-r
 **Curation, not spam:** banners here are forged on demand (your issues) — no
 background polling, no wasted runs. The operator (@aikitapp) also hand-picks the
 freshest launches on X and posts templated, letter-perfect banners daily.
+## How it's made (Agnes multi-step forge)
+
+1. **Auto-fetch** — your coin's logo is pulled automatically from DexScreener
+2. **Vision sheet** — Agnes vision reads your logo: character, colors, mood
+3. **Image merge** — Agnes merges the logo INTO a full cinematic scene, character preserved
+   (the whole background is grown from your coin's own artwork — no generic templates)
+4. **Wordmark** — your ticker rendered letter-perfect over the scene
+5. **Vision QA** — a final Agnes vision pass checks the text and the character
+
 ## Prefer a human-crafted one?
 
 Order the hand-tuned dex banner (exact 1920×640, VLM-checked lettering) in 30 seconds:
