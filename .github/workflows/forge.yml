@@ -17,8 +17,6 @@ on:
         description: "Visual theme"
         required: false
         default: ""
-  schedule:
-    - cron: "*/30 * * * *"
 
 permissions:
   contents: write
@@ -32,7 +30,6 @@ jobs:
   forge:
     if: >-
       github.event_name == 'workflow_dispatch' ||
-      github.event_name == 'schedule' ||
       (github.event_name == 'issues' && contains(github.event.issue.labels.*.name, 'forge'))
     runs-on: ubuntu-latest
     timeout-minutes: 12
@@ -61,10 +58,6 @@ jobs:
           THEME_IN: ${{ github.event_name == 'issues' && steps.parse.outputs.theme || github.event.inputs.theme }}
         run: python forge/resolve_token.py >> "$GITHUB_ENV"
 
-      - name: Auto-fetch fresh CAs (scheduled mode)
-        if: github.event_name == 'schedule'
-        run: python forge/fetch_cas.py >> "$GITHUB_ENV"
-
       - name: Forge banner(s)
         env:
           AGNES_API_KEY: ${{ secrets.AGNES_API_KEY }}
@@ -73,12 +66,8 @@ jobs:
           ISSUE_NUM: ${{ github.event.issue.number || 0 }}
           FORGE_MODE: ${{ github.event_name }}
         run: |
-          if [ "$FORGE_MODE" = "schedule" ]; then
-            python forge/forge.py --batch "$FORGE_BATCH" --out out/auto
-          else
-            python forge/forge.py --ca "$CA" --ticker "$TICKER" --theme "$THEME" \
-              --tag "issue${ISSUE_NUM}" --out out
-          fi
+          python forge/forge.py --ca "$CA" --ticker "$TICKER" --theme "$THEME" \
+            --tag "issue${ISSUE_NUM}" --out out
 
       - name: Commit outputs
         run: |
@@ -110,3 +99,4 @@ jobs:
               issue_number: context.issue.number,
               body
             });
+
