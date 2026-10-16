@@ -70,9 +70,12 @@ def slugify(s):
     return re.sub(r"[^A-Za-z0-9]+", "-", s).strip("-").lower() or "token"
 
 def forge_one(ca, ticker, theme, out_dir, tag):
-    chain = None
-    if ca and (not ticker or ticker == "TOKEN"):
-        ticker, chain, hint = dex_lookup(ca)
+    chain = os.environ.get("CHAIN", "") or None
+    if ca and (not ticker or ticker == "TOKEN" or not chain):
+        t2, c2, hint = dex_lookup(ca) or (None, None, None)
+        if t2 and (not ticker or ticker == "TOKEN"):
+            ticker = t2
+        chain = chain or c2
         theme = theme or hint
     if not ticker:
         ticker = "TOKEN"
