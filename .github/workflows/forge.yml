@@ -1,0 +1,110 @@
+name: forge
+
+on:
+  issues:
+    types: [opened, edited]
+  workflow_dispatch:
+    inputs:
+      ca:
+        description: "Token CA (optional — auto-pulls ticker/chain from DexScreener)"
+        required: false
+        default: ""
+      ticker:
+        description: "Wordmark (used if CA empty)"
+        required: false
+        default: "TOKEN"
+      theme:
+        description: "Visual theme"
+        required: false
+        default: ""
+  schedule:
+    - cron: "*/30 * * * *"
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: forge-${{ github.event.issue.number || github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  forge:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'schedule' ||
+      (github.event_name == 'issues' && contains(github.event.issue.labels.*.name, 'forge'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps
+        run: python -m pip install --quiet requests
+
+      - name: Parse issue body
+        if: github.event_name == 'issues'
+        id: parse
+        env:
+          ISSUE_BODY: ${{ github.event.issue.body }}
+        run: python forge/parse_issue.py >> "$GITHUB_OUTPUT"
+
+      - name: Resolve token (CA -> ticker/chain)
+        id: resolve
+        env:
+          CA: ${{ github.event_name == 'issues' && steps.parse.outputs.ca || github.event.inputs.ca }}
+          TICKER_IN: ${{ github.event_name == 'issues' && steps.parse.outputs.ticker || github.event.inputs.ticker }}
+          THEME_IN: ${{ github.event_name == 'issues' && steps.parse.outputs.theme || github.event.inputs.theme }}
+        run: python forge/resolve_token.py >> "$GITHUB_ENV"
+
+      - name: Auto-fetch fresh CAs (scheduled mode)
+        if: github.event_name == 'schedule'
+        run: python forge/fetch_cas.py >> "$GITHUB_ENV"
+
+      - name: Forge banner(s)
+        env:
+          AGNES_API_KEY: ${{ secrets.AGNES_API_KEY }}
+          ISSUE_NUM: ${{ github.event.issue.number || 0 }}
+          FORGE_MODE: ${{ github.event_name }}
+        run: |
+          if [ "$FORGE_MODE" = "schedule" ]; then
+            python forge/forge.py --batch "$FORGE_BATCH" --out out/auto
+          else
+            python forge/forge.py --ca "$CA" --ticker "$TICKER" --theme "$THEME" \
+              --tag "issue${ISSUE_NUM}" --out out
+          fi
+
+      - name: Commit outputs
+        run: |
+          git config user.name "forge-bot"
+          git config user.email "forge-bot@users.noreply.github.com"
+          git add out/ || true
+          git diff --cached --quiet || git commit -m "forge: $TICKER ($FORGE_MODE)"
+          git push
+
+      - name: Comment on issue
+        if: github.event_name == 'issues'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let body = 'Forge finished, but meta.json was missing — check the Actions log.';
+            try {
+              const meta = JSON.parse(fs.readFileSync('out/meta.json', 'utf8'));
+              const raw = `https://raw.githubusercontent.com/${context.repo.owner}/${context.repo.repo}/main/${meta.file}`;
+              body = `🔥 Forged **${meta.ticker}** (${meta.chain || 'n/a'}) — ready in ~2 min.\n\n` +
+                     `![banner](${raw})\n\n` +
+                     `Direct file: ${raw}\n` +
+                     `Want another vibe? Edit the **theme** in your issue body — the forge re-runs automatically.\n\n` +
+                     `Need the exact 1920×640 dex banner with letter-checked typography? Order in 30s: https://cookerc21-dot.github.io or mention @aikitapp on X.`;
+            } catch (e) {}
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body
+            });
