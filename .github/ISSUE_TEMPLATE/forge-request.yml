@@ -1,0 +1,28 @@
+name: 🔥 Forge request
+description: Get a token banner forged on the spot (~2 min, free)
+title: "Forge: <ticker or CA>"
+labels: [forge]
+body:
+  - type: input
+    id: ca
+    attributes:
+      label: Token CA (contract address)
+      description: We auto-pull ticker + chain from DexScreener
+      placeholder: "0x... or Solana mint address"
+    validations:
+      required: true
+  - type: input
+    id: theme
+    attributes:
+      label: Theme (optional)
+      description: "A few words, e.g. golden dragon treasure / neon cyberpunk city / viking storm"
+      placeholder: "premium crypto launch energy"
+    validations:
+      required: false
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Agreement
+      options:
+        - label: I understand outputs are AI-generated previews, free to use for my token's socials
+          required: true
