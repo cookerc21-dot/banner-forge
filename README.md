@@ -20,11 +20,9 @@ Want a different vibe? **Edit your issue body** (theme words) and the forge re-r
 |---|---|
 | `out/<TICKER>_<ts>.png` | AI-forged banner, post-ready for X / Telegram / DEX update requests |
 
-Fresh launches: the forge also runs **every 30 minutes** on its own — it auto-fetches
-tokens born in the last 30 minutes from DexScreener and forges banners for the
-highest-traction ones into `out/auto/`. If your coin is brand new, there's a good
-chance your banner is already here — browse [`out/auto/`](./out/auto).
-
+**Curation, not spam:** banners here are forged on demand (your issues) — no
+background polling, no wasted runs. The operator (@aikitapp) also hand-picks the
+freshest launches on X and posts templated, letter-perfect banners daily.
 ## Prefer a human-crafted one?
 
 Order the hand-tuned dex banner (exact 1920×640, VLM-checked lettering) in 30 seconds:
@@ -37,3 +35,4 @@ The generation key lives **only** in encrypted repository Actions secrets
 
 ---
 *Banner outputs are AI-generated previews — free to use for your token's socials.*
+
